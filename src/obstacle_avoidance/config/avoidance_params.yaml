@@ -1,3 +1,8 @@
+perception_node:
+  ros__parameters:
+    front_angle_deg: 30.0  # [deg] on sektor: +/- 30 -> /obstacle_distance
+    side_angle_deg: 90.0   # [deg] yan sektorler: 30..90 sol, -90..-30 sag
+
 decision_node:
   ros__parameters:
     slow_distance: 2.0     # [m] altinda YAVASLA
@@ -6,13 +11,15 @@ decision_node:
     hysteresis: 0.1        # [m] durumdan cikarken eklenen pay
     stop_hold_time: 1.0    # [s] DUR'da minimum bekleme
     sensor_timeout: 0.5    # [s] LiDAR ~6 Hz (WSL) -> 0.17 s aralik, 0.5 s guvenli
+    side_margin: 0.1       # [m] sol/sag farki bundan kucukse varsayilan yon
+    default_turn_direction: 1   # +1 sol, -1 sag (fark kucukse / yan veri yoksa)
 
 control_node:
   ros__parameters:
     cruise_speed: 0.4      # [m/s] SERBEST
     slow_speed: 0.15       # [m/s] YAVASLA
     turn_speed: 0.6        # [rad/s] KACIN
-    turn_direction: 1      # +1 sol, -1 sag
+    turn_direction: 1      # /turn_direction gelmeden onceki yedek yon (+1 sol, -1 sag)
     max_accel: 0.5         # [m/s^2]
     max_decel: 1.5         # [m/s^2]
     state_timeout: 0.5     # [s] /state gelmezse DUR

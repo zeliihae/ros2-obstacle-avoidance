@@ -1,5 +1,5 @@
 // control_node.cpp
-// /state (String) --> hiz profili --> /cmd_vel (Twist)
+// /state (String) + /turn_direction (Int8) --> hiz profili --> /cmd_vel (Twist)
 #include <algorithm>
 #include <chrono>
 #include <memory>
@@ -7,6 +7,7 @@
 
 #include "geometry_msgs/msg/twist.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/int8.hpp"
 #include "std_msgs/msg/string.hpp"
 
 #include "obstacle_avoidance/avoidance_state_machine.hpp"
@@ -24,7 +25,7 @@ public:
     cruise_speed_ = std::max(0.0, declare_parameter<double>("cruise_speed", 0.4));
     slow_speed_ = std::max(0.0, declare_parameter<double>("slow_speed", 0.15));
     turn_speed_ = std::max(0.0, declare_parameter<double>("turn_speed", 0.6));
-    const int dir = declare_parameter<int>("turn_direction", 1);  // +1 sol, -1 sag
+    const int dir = declare_parameter<int>("turn_direction", 1);  // varsayilan: +1 sol, -1 sag
     turn_sign_ = (dir >= 0) ? 1.0 : -1.0;
     max_accel_ = std::max(0.01, declare_parameter<double>("max_accel", 0.5));   // [m/s^2]
     max_decel_ = std::max(0.01, declare_parameter<double>("max_decel", 1.5));   // [m/s^2]
@@ -34,6 +35,11 @@ public:
     cmd_pub_ = create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
     state_sub_ = create_subscription<std_msgs::msg::String>(
       "/state", 10, [this](const std_msgs::msg::String::SharedPtr msg) {on_state(*msg);});
+
+    turn_sub_ = create_subscription<std_msgs::msg::Int8>(
+      "/turn_direction", 10, [this](const std_msgs::msg::Int8::SharedPtr msg) {
+        turn_sign_ = (msg->data >= 0) ? 1.0 : -1.0;  // decision_node'un sectigi yon
+      });
 
     const auto period = std::chrono::duration<double>(1.0 / control_rate_);
     timer_ = rclcpp::create_timer(
@@ -124,6 +130,7 @@ private:
   bool warned_{false};
 
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr state_sub_;
+  rclcpp::Subscription<std_msgs::msg::Int8>::SharedPtr turn_sub_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
 };

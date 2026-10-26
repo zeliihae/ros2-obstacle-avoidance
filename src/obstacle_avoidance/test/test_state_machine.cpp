@@ -107,6 +107,65 @@ int main()
     CHECK(state_from_string("???", &ok) == State::DUR && !ok);
   }
 
+  {  // 10) Aşama 3: daha boş tarafa dönüş (sol boş -> +1, sağ boş -> -1)
+    auto sm = make_free_machine(t);
+    sm.set_side_distances(3.0, 0.8);
+    sm.update(0.9, t += 0.17);                // KACIN
+    CHECK(sm.state() == State::KACIN);
+    CHECK(sm.turn_direction() == 1);
+
+    auto sm2 = make_free_machine(t);
+    sm2.set_side_distances(0.8, 3.0);
+    sm2.update(0.9, t += 0.17);
+    CHECK(sm2.state() == State::KACIN);
+    CHECK(sm2.turn_direction() == -1);
+  }
+  {  // 11) Yön KACIN boyunca sabit kalır (yan değerler değişse bile)
+    auto sm = make_free_machine(t);
+    sm.set_side_distances(0.8, 3.0);          // sağ boş -> -1
+    sm.update(0.9, t += 0.17);
+    CHECK(sm.turn_direction() == -1);
+    sm.set_side_distances(3.0, 0.8);          // robot dönerken değerler tersine döner
+    sm.update(0.9, t += 0.17);
+    CHECK(sm.state() == State::KACIN);
+    CHECK(sm.turn_direction() == -1);         // yön değişmemeli (titreme yok)
+  }
+  {  // 12) Fark küçükse veya yan veri yoksa varsayılan yön; ani engelde (DUR->KACIN) da yön seçilir
+    auto sm = make_free_machine(t);
+    sm.set_side_distances(2.00, 2.05);        // fark < 0.1 m
+    sm.update(0.9, t += 0.17);
+    CHECK(sm.turn_direction() == 1);          // varsayılan: sol
+
+    auto sm2 = make_free_machine(t);
+    sm2.clear_side_distances();               // yan sensör verisi yok
+    sm2.update(0.9, t += 0.17);
+    CHECK(sm2.turn_direction() == 1);
+
+    Config right_default; right_default.default_turn = -1;
+    CHECK(right_default.valid());
+    AvoidanceStateMachine sm3{right_default};
+    sm3.update(8.0, 0.0); sm3.update(8.0, 1.1); sm3.update(8.0, 1.3);  // SERBEST
+    sm3.set_side_distances(1.0, 1.0);
+    sm3.update(0.3, 1.5);                     // ani engel -> DUR
+    sm3.set_side_distances(0.2, 4.0);         // DUR sırasında sağ açıldı
+    sm3.update(0.3, 2.7);                     // bekleme bitti -> KACIN
+    CHECK(sm3.state() == State::KACIN);
+    CHECK(sm3.turn_direction() == -1);
+
+    Config bad_turn; bad_turn.default_turn = 0;
+    CHECK(!bad_turn.valid());
+  }
+  {  // 13) Yan mesafe uç değerleri: -inf/NaN kapalı (0 m), +inf açık
+    auto sm = make_free_machine(t);
+    sm.set_side_distances(-kInf, kInf);       // sol kapalı, sağ sonsuz açık
+    sm.update(0.9, t += 0.17);
+    CHECK(sm.turn_direction() == -1);
+    auto sm2 = make_free_machine(t);
+    sm2.set_side_distances(kInf, kInf);       // ikisi de açık -> fark 0 -> varsayılan
+    sm2.update(0.9, t += 0.17);
+    CHECK(sm2.turn_direction() == 1);
+  }
+
   if (failures == 0) {std::puts("TUM TESTLER GECTI");}
   return failures == 0 ? 0 : 1;
 }

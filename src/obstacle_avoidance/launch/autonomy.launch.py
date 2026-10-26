@@ -22,7 +22,7 @@ def generate_launch_description():
             os.path.join(pkg, 'launch', 'simulation.launch.py')))
 
     perception = Node(package='obstacle_avoidance', executable='perception_node',
-                      name='perception_node', output='screen')
+                      name='perception_node', output='screen', parameters=[params])
     decision = Node(package='obstacle_avoidance', executable='decision_node',
                     name='decision_node', output='screen', parameters=[params])
     control = Node(package='obstacle_avoidance', executable='control_node',
