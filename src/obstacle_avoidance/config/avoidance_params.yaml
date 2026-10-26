@@ -1,0 +1,19 @@
+decision_node:
+  ros__parameters:
+    slow_distance: 2.0     # [m] altinda YAVASLA
+    avoid_distance: 1.0    # [m] altinda KACIN (yerinde don)
+    stop_distance: 0.5     # [m] altinda DUR (acil fren)
+    hysteresis: 0.1        # [m] durumdan cikarken eklenen pay
+    stop_hold_time: 1.0    # [s] DUR'da minimum bekleme
+    sensor_timeout: 0.5    # [s] LiDAR ~6 Hz (WSL) -> 0.17 s aralik, 0.5 s guvenli
+
+control_node:
+  ros__parameters:
+    cruise_speed: 0.4      # [m/s] SERBEST
+    slow_speed: 0.15       # [m/s] YAVASLA
+    turn_speed: 0.6        # [rad/s] KACIN
+    turn_direction: 1      # +1 sol, -1 sag
+    max_accel: 0.5         # [m/s^2]
+    max_decel: 1.5         # [m/s^2]
+    state_timeout: 0.5     # [s] /state gelmezse DUR
+    control_rate: 20.0     # [Hz]
